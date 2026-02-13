@@ -24,7 +24,7 @@ classifiers = [
 ]
 dependencies = [
 "fastmcp>=v2.12.4",
-"zabbix_utils>=2.0.3",
+"zabbix_utils>=2.0.4",
 "python-dotenv>=1.1.1"
 ]
 requires-python = ">=3.10"
