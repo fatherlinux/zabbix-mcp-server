@@ -54,13 +54,20 @@ def get_zabbix_client() -> ZabbixAPI:
         
         logger.info(f"Initializing Zabbix API client for {url}")
         
-        # Initialize client
-        zabbix_api = ZabbixAPI(url=url)
-        
-        # Configure SSL verification
+        # Configure SSL verification and version check
         verify_ssl = os.getenv("VERIFY_SSL", "true").lower() in ("true", "1", "yes")
-        zabbix_api.validate_certs = verify_ssl
+        skip_version_check = os.getenv("ZABBIX_SKIP_VERSION_CHECK", "false").lower() in ("true", "1", "yes")
+        
         logger.info(f"SSL certificate verification: {'enabled' if verify_ssl else 'disabled'}")
+        if skip_version_check:
+            logger.info("Skipping Zabbix API version check")
+
+        # Initialize client
+        zabbix_api = ZabbixAPI(
+            url=url, 
+            validate_certs=verify_ssl,
+            skip_version_check=skip_version_check
+        )
         
         # Authenticate using token or username/password
         token = os.getenv("ZABBIX_TOKEN")
