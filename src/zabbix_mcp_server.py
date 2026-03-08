@@ -1276,6 +1276,283 @@ def maintenance_delete(maintenanceids: List[str]) -> str:
     return format_response(result)
 
 
+# WEB SCENARIO (HTTPTEST) MANAGEMENT
+@mcp.tool()
+def httptest_get(httptestids: Optional[List[str]] = None,
+                 hostids: Optional[List[str]] = None,
+                 output: Union[str, List[str]] = "extend",
+                 search: Optional[Dict[str, str]] = None,
+                 filter: Optional[Dict[str, Any]] = None,
+                 limit: Optional[int] = None) -> str:
+    """Get web scenarios from Zabbix with optional filtering.
+
+    Args:
+        httptestids: List of web scenario IDs to retrieve
+        hostids: List of host IDs to filter by
+        output: Output format (extend or list of specific fields)
+        search: Search criteria
+        filter: Filter criteria
+        limit: Maximum number of results
+
+    Returns:
+        str: JSON formatted list of web scenarios
+    """
+    client = get_zabbix_client()
+    params = {"output": output}
+
+    if httptestids:
+        params["httptestids"] = httptestids
+    if hostids:
+        params["hostids"] = hostids
+    if search:
+        params["search"] = search
+    if filter:
+        params["filter"] = filter
+    if limit:
+        params["limit"] = limit
+
+    result = client.httptest.get(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def httptest_create(name: str, hostid: str, steps: List[Dict[str, Any]],
+                    delay: str = "1m", retries: int = 1,
+                    agent: Optional[str] = None,
+                    status: int = 0) -> str:
+    """Create a new web scenario in Zabbix.
+
+    Args:
+        name: Web scenario name
+        hostid: Host ID to create the scenario on
+        steps: List of scenario steps (each: {"name": str, "url": str, "no": int, "status_codes": str})
+        delay: Check interval (default 1m)
+        retries: Number of retries (default 1)
+        agent: HTTP agent string
+        status: Status (0=enabled, 1=disabled)
+
+    Returns:
+        str: JSON formatted creation result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    params = {
+        "name": name,
+        "hostid": hostid,
+        "steps": steps,
+        "delay": delay,
+        "retries": retries,
+        "status": status
+    }
+
+    if agent:
+        params["agent"] = agent
+
+    result = client.httptest.create(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def httptest_update(httptestid: str, name: Optional[str] = None,
+                    delay: Optional[str] = None, status: Optional[int] = None,
+                    steps: Optional[List[Dict[str, Any]]] = None) -> str:
+    """Update an existing web scenario in Zabbix.
+
+    Args:
+        httptestid: Web scenario ID to update
+        name: New scenario name
+        delay: New check interval
+        status: New status (0=enabled, 1=disabled)
+        steps: New list of scenario steps
+
+    Returns:
+        str: JSON formatted update result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    params = {"httptestid": httptestid}
+
+    if name:
+        params["name"] = name
+    if delay:
+        params["delay"] = delay
+    if status is not None:
+        params["status"] = status
+    if steps:
+        params["steps"] = steps
+
+    result = client.httptest.update(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def httptest_delete(httptestids: List[str]) -> str:
+    """Delete web scenarios from Zabbix.
+
+    Args:
+        httptestids: List of web scenario IDs to delete
+
+    Returns:
+        str: JSON formatted deletion result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    result = client.httptest.delete(*httptestids)
+    return format_response(result)
+
+
+# SERVICE MANAGEMENT
+@mcp.tool()
+def service_get(serviceids: Optional[List[str]] = None,
+                parentids: Optional[List[str]] = None,
+                childids: Optional[List[str]] = None,
+                output: Union[str, List[str]] = "extend",
+                search: Optional[Dict[str, str]] = None,
+                filter: Optional[Dict[str, Any]] = None) -> str:
+    """Get services from Zabbix with optional filtering.
+
+    Args:
+        serviceids: List of service IDs to retrieve
+        parentids: List of parent service IDs to filter by
+        childids: List of child service IDs to filter by
+        output: Output format (extend or list of specific fields)
+        search: Search criteria
+        filter: Filter criteria
+
+    Returns:
+        str: JSON formatted list of services
+    """
+    client = get_zabbix_client()
+    params = {"output": output}
+
+    if serviceids:
+        params["serviceids"] = serviceids
+    if parentids:
+        params["parentids"] = parentids
+    if childids:
+        params["childids"] = childids
+    if search:
+        params["search"] = search
+    if filter:
+        params["filter"] = filter
+
+    result = client.service.get(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def service_create(name: str, algorithm: int, sortorder: int,
+                   weight: Optional[int] = None,
+                   tags: Optional[List[Dict[str, str]]] = None,
+                   problem_tags: Optional[List[Dict[str, str]]] = None,
+                   parents: Optional[List[Dict[str, str]]] = None,
+                   children: Optional[List[Dict[str, str]]] = None,
+                   status_rules: Optional[List[Dict[str, Any]]] = None) -> str:
+    """Create a new service in Zabbix.
+
+    Args:
+        name: Service name
+        algorithm: Status calculation algorithm (0=set OK, 1=most critical if all children, 2=most critical of children)
+        sortorder: Sort order for display
+        weight: Service weight
+        tags: List of service tags (format: [{"tag": "key", "value": "val"}])
+        problem_tags: List of problem tags for mapping
+        parents: List of parent services (format: [{"serviceid": "1"}])
+        children: List of child services (format: [{"serviceid": "2"}])
+        status_rules: List of status rules
+
+    Returns:
+        str: JSON formatted creation result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    params = {
+        "name": name,
+        "algorithm": algorithm,
+        "sortorder": sortorder
+    }
+
+    if weight is not None:
+        params["weight"] = weight
+    if tags:
+        params["tags"] = tags
+    if problem_tags:
+        params["problem_tags"] = problem_tags
+    if parents:
+        params["parents"] = parents
+    if children:
+        params["children"] = children
+    if status_rules:
+        params["status_rules"] = status_rules
+
+    result = client.service.create(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def service_update(serviceid: str, name: Optional[str] = None,
+                   algorithm: Optional[int] = None,
+                   sortorder: Optional[int] = None,
+                   tags: Optional[List[Dict[str, str]]] = None,
+                   problem_tags: Optional[List[Dict[str, str]]] = None,
+                   status_rules: Optional[List[Dict[str, Any]]] = None) -> str:
+    """Update an existing service in Zabbix.
+
+    Args:
+        serviceid: Service ID to update
+        name: New service name
+        algorithm: New status calculation algorithm
+        sortorder: New sort order
+        tags: New list of service tags
+        problem_tags: New list of problem tags
+        status_rules: New list of status rules
+
+    Returns:
+        str: JSON formatted update result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    params = {"serviceid": serviceid}
+
+    if name:
+        params["name"] = name
+    if algorithm is not None:
+        params["algorithm"] = algorithm
+    if sortorder is not None:
+        params["sortorder"] = sortorder
+    if tags:
+        params["tags"] = tags
+    if problem_tags:
+        params["problem_tags"] = problem_tags
+    if status_rules:
+        params["status_rules"] = status_rules
+
+    result = client.service.update(**params)
+    return format_response(result)
+
+
+@mcp.tool()
+def service_delete(serviceids: List[str]) -> str:
+    """Delete services from Zabbix.
+
+    Args:
+        serviceids: List of service IDs to delete
+
+    Returns:
+        str: JSON formatted deletion result
+    """
+    validate_read_only()
+
+    client = get_zabbix_client()
+    result = client.service.delete(*serviceids)
+    return format_response(result)
+
+
 # GRAPH MANAGEMENT
 @mcp.tool()
 def graph_get(graphids: Optional[List[str]] = None,
