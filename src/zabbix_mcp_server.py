@@ -191,30 +191,34 @@ def host_create(host: str, groups: List[Dict[str, str]],
 
 
 @mcp.tool()
-def host_update(hostid: str, host: Optional[str] = None, 
-                name: Optional[str] = None, status: Optional[int] = None) -> str:
+def host_update(hostid: str, host: Optional[str] = None,
+                name: Optional[str] = None, status: Optional[int] = None,
+                description: Optional[str] = None) -> str:
     """Update an existing host in Zabbix.
-    
+
     Args:
         hostid: Host ID to update
         host: New host name
         name: New visible name
         status: New status (0=enabled, 1=disabled)
-        
+        description: New host description
+
     Returns:
         str: JSON formatted update result
     """
     validate_read_only()
-    
+
     client = get_zabbix_client()
     params = {"hostid": hostid}
-    
+
     if host:
         params["host"] = host
     if name:
         params["name"] = name
     if status is not None:
         params["status"] = status
+    if description:
+        params["description"] = description
     
     result = client.host.update(**params)
     return format_response(result)
